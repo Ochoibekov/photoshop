@@ -8,12 +8,51 @@ set :application, 'photoshop'
 set :repo_url, 'git@github.com:Omkasokuluk/photoshop.git'
 set :deploy_to, '/home/deploy/photoshop'
 set :scm, :git
+set :rvm_ruby_version, '2.5.1'
 
-set :format, :airbrussh
-append :linked_files, 'config/database.yml', 'config/secrets.yml'
-append :linked_dirs, 'log', 'tmp/pids', 'tmp/cache', 'tmp/sockets', 'public/system'
-# Default branch is :master
-# ask :branch, `git rev-parse --abbrev-ref HEAD`.chomp
+append :linked_dirs, 'log', 'tmp'
+append :linked_files, '.env', 'config/puma.rb', 'config/database.yml', 'config/secrets.yml'
+
+set :foreman_init_system, 'systemd'
+set :foreman_export_path, '/lib/systemd/system'
+set :foreman_options, app: fetch(:application), root: current_path, log: File.join(shared_path, 'log')
+
+namespace :deploy do
+  task :restart do
+    on roles(:app) do |host|
+      f = "#{fetch :foreman_export_path}/#{fetch(:foreman_options)[:app]}.conf"
+      if test("[ -f #{f} ]")
+        invoke 'foreman:restart'
+      else
+        invoke 'foreman:setup'
+      end
+    end
+  end
+
+  desc "Fix file permissions"
+  task :fix_file_permissions do
+    on roles(:app) do
+      execute "chown -R #{fetch :application} #{shared_path}/tmp"
+      execute "chown -R #{fetch :application} #{shared_path}/log"
+    end
+  end
+
+  task :check_env do
+    on roles(:all) do |host|
+      f = "#{shared_path}/.env"
+      if test("[ -f #{f} ]")
+        info "#{f} already exists on #{host}!"
+      else
+        execute "echo 'RAILS_ENV=#{fetch :stage}' > #{f}"
+        execute "echo 'PATH=/usr/local/rvm/wrappers/#{fetch(:rvm_ruby_version)}:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin' >> #{f}"
+      end
+    end
+  end
+
+  before 'check:linked_files', :check_env
+  after :publishing, :fix_file_permissions
+  after :publishing, :restart
+end
 
 # Default deploy_to directory is /var/www/my_app_name
 # set :deploy_to, "/var/www/my_app_name"
