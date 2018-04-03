@@ -13,6 +13,7 @@ require 'capistrano/console'
 require 'capistrano/puma'
 require 'capistrano/rails/console'
 require 'airbrussh/capistrano'
+require 'capistrano/foreman'
 
 # Load the SCM plugin appropriate to your project:
 #

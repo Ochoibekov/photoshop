@@ -33,7 +33,7 @@ gem 'jbuilder', '~> 2.5'
 # Use Capistrano for deployment
 # gem 'capistrano-rails', group: :development
 
-
+gem 'foreman'
 group :development do
 # Access an IRB console on exception pages or by using <%= console %> anywhere in the code.
 gem 'web-console', '>= 3.3.0'
@@ -47,6 +47,8 @@ gem 'capistrano-rails', require: false
 gem 'capistrano-bundler', require: false
 gem 'capistrano3-puma', require: false
 gem 'capistrano-rails-console', require: false
+gem 'capistrano-foreman'
+
 end
 
 group :development, :test do
